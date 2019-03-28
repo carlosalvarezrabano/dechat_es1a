@@ -98,18 +98,18 @@ export class ChatComponent implements OnInit {
     }
 
     async actualizar() {
-        let messages_aux = [];
+        const messages_aux = [];
         const user = this.getUserByUrl(this.ruta_seleccionada);
         let senderId = this.rdf.session.webId;
         const stringToChange = '/profile/card#me';
         const path = '/public/dechat1a/' + user + '/Conversation.txt';
         senderId = senderId.replace(stringToChange, path);
         this.ruta = senderId;
-        let content = await this.readMessage(senderId);
-        console.log("CONTENT:   " + content);
+        const content = await this.readMessage(senderId);
+        console.log('CONTENT:   ' + content);
         if (!(content === undefined)) {
 
-            let messageArray = content.split('\n');
+            const messageArray = content.split('\n');
             messageArray.forEach(element => {
                 console.log(element.content);
                 if (element[0]) {
@@ -126,13 +126,13 @@ export class ChatComponent implements OnInit {
             });
         }
 
-        var urlArray = this.ruta_seleccionada.split("/");
-        let url = "https://" + urlArray[2] + "/public/dechat1a/" + this.getUserByUrl(this.rdf.session.webId) + '/Conversation.txt';
-        var contentReceiver = await this.readMessage(url);
+        const urlArray = this.ruta_seleccionada.split('/');
+        const url = 'https://' + urlArray[2] + '/public/dechat1a/' + this.getUserByUrl(this.rdf.session.webId) + '/Conversation.txt';
+        const contentReceiver = await this.readMessage(url);
 
-        console.log("CONTENT RECEIVER:                    " + contentReceiver);
-        if(!(contentReceiver === undefined)) {
-            var messageArrayReceiver = contentReceiver.split('\n');
+        console.log('CONTENT RECEIVER:                    ' + contentReceiver);
+        if (!(contentReceiver === undefined)) {
+            const messageArrayReceiver = contentReceiver.split('\n');
             messageArrayReceiver.forEach(element => {
                 console.log(element.content);
                 if (element[0]) {
@@ -149,11 +149,10 @@ export class ChatComponent implements OnInit {
             });
         }
 
-        console.log("TAMAÑO messages_AUX: " + messages_aux.length);
-        console.log("TAMAÑO messages: " + this.messages.length);
+        console.log('TAMAÑO messages_AUX: ' + messages_aux.length);
+        console.log('TAMAÑO messages: ' + this.messages.length);
 
-        if (messages_aux.length != this.messages.length)
-        {
+        if (messages_aux.length != this.messages.length) {
             this.messages = [];
             this.messages = messages_aux;
             this.messages = this.order(this.messages);
@@ -163,10 +162,10 @@ export class ChatComponent implements OnInit {
 
 
     private order(mess: message[]) {
-        let ordenado: message[] = [];
-        let aux = mess;
+        const ordenado: message[] = [];
+        const aux = mess;
         while (mess.length > 0) {
-            let idx = this.menor(aux);
+            const idx = this.menor(aux);
             ordenado.push(aux[idx]);
             aux.splice(idx, 1);
         }
@@ -175,8 +174,8 @@ export class ChatComponent implements OnInit {
 
 
     private menor(aux: message[]) {
-        var idx = 0;
-        var minor: message = aux[idx];
+        let idx = 0;
+        let minor: message = aux[idx];
         for (let i = 0; i < aux.length; i++) {
             if (aux[i].date < minor.date) {
                 idx = i;
@@ -252,9 +251,8 @@ export class ChatComponent implements OnInit {
     }
 
 
-    getProfilePicture(user)
-    {
-        let a = user.toString().replace("card#me", "perfil.jpeg");
+    getProfilePicture(user) {
+        const a = user.toString().replace('card#me', 'perfil.jpeg');
         return a;
     }
 }
