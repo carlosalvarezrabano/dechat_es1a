@@ -39,6 +39,7 @@ export class ChatComponent implements OnInit {
                 const name = this.getUserByUrl(this.ruta_seleccionada);
                 this.createNewFolder('dechat1a', '/public/');
                 this.createNewFolder(name, '/public/dechat1a/');
+                this.generateACL();
             }
         });
         this.fileClient = require('solid-file-client');
@@ -56,6 +57,7 @@ export class ChatComponent implements OnInit {
         this.createNewFolder('dechat1a', '/public/');
         this.createNewFolder(name, '/public/dechat1a/');
         document.getElementById('receiver').innerHTML = name;
+        this.generateACL();
     }
 
     /**
@@ -154,36 +156,15 @@ export class ChatComponent implements OnInit {
 
         if (messages_aux.length != this.messages.length) {
             this.messages = [];
+
+            messages_aux.sort(function(a, b) {
+                // convert date object into number to resolve issue in typescript
+                return  +new Date(a.date) - +new Date(b.date);
+            })
             this.messages = messages_aux;
-            this.messages = this.order(this.messages);
         }
-
     }
 
-
-    private order(mess: message[]) {
-        const ordenado: message[] = [];
-        const aux = mess;
-        while (mess.length > 0) {
-            const idx = this.menor(aux);
-            ordenado.push(aux[idx]);
-            aux.splice(idx, 1);
-        }
-        return ordenado;
-    }
-
-
-    private menor(aux: message[]) {
-        let idx = 0;
-        let minor: message = aux[idx];
-        for (let i = 0; i < aux.length; i++) {
-            if (aux[i].date < minor.date) {
-                idx = i;
-                minor = aux[idx];
-            }
-        }
-        return idx;
-    }
 
     private async readMessage(url) {
         this.ruta = url;
@@ -255,7 +236,52 @@ export class ChatComponent implements OnInit {
         const a = user.toString().replace('card#me', 'perfil.jpeg');
         return a;
     }
+
+
+    private generateACL()
+    {
+
+        let user = this.getUserByUrl(this.ruta_seleccionada);
+
+        const filename = '/public/dechat1a/' + user + ".acl";
+        var aclContents = this.generateACL();
+
+        this.fileClient.updateFile(filename, aclContents).then(success => {
+            200
+        }, err => this.fileClient.createFile(filename, aclContents).then(200));
+    }
+
+
+    private ACLAux() {
+
+        let partnerID = this.ruta_seleccionada.replace("#me", "#");
+
+        let user = this.getUserByUrl(this.ruta_seleccionada);
+        const filename = '/public/dechat1a/' + user + '/Conversation.txt';
+
+
+        var ACL = "@prefix : <#>. \n"
+            +"@prefix n0: <http://www.w3.org/ns/auth/acl#>. \n"
+            +"@prefix c: </profile/card#>. \n"
+            +"@prefix c0: <"+ partnerID + ">. \n\n"
+
+            +":ControlReadWrite \n"
+            +"\ta n0:Authorization; \n"
+            +"\tn0:accessTo <"+ filename +">; \n"
+            +"\tn0:agent c:me; \n"
+            +"\tn0:mode n0:Control, n0:Read, n0:Write. \n"
+            +":Read \n"
+            +"\ta n0:Authorization; \n"
+            +"\tn0:accessTo <"+ filename +">; \n"
+            +"\tn0:agent c0:me; \n"
+            +"\tn0:mode n0:Read.";
+        return ACL;
+    }
 }
+
+
+
+
 
 class TXTPrinter {
     public getTXTDataFromMessage(message) {
