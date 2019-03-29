@@ -4,6 +4,7 @@ import {Friend} from '../../models/friend.model';
 import {ToastrService} from 'ngx-toastr';
 import {ChatService} from '../../services/chat.service';
 import {message} from '../../models/message.model';
+import {listFiles} from 'list-files-in-dir';
 
 declare var require: any;
 
@@ -21,6 +22,9 @@ export class ChatComponent implements OnInit {
     ruta_seleccionada: string;
     messages: message[] = [];
     ruta: string;
+    private receiverPicture: string;
+    private senderPicture: string;
+
 
     constructor(private rdf: RdfService, private toastr: ToastrService, private chat: ChatService) {
     }
@@ -39,7 +43,7 @@ export class ChatComponent implements OnInit {
                 const name = this.getUserByUrl(this.ruta_seleccionada);
                 this.createNewFolder('dechat1a', '/public/');
                 this.createNewFolder(name, '/public/dechat1a/');
-                this.generateACL();
+                //this.generateACL();
             }
         });
         this.fileClient = require('solid-file-client');
@@ -57,7 +61,7 @@ export class ChatComponent implements OnInit {
         this.createNewFolder('dechat1a', '/public/');
         this.createNewFolder(name, '/public/dechat1a/');
         document.getElementById('receiver').innerHTML = name;
-        this.generateACL();
+        this.getProfilePicture();
     }
 
     /**
@@ -90,7 +94,7 @@ export class ChatComponent implements OnInit {
         });
     }
 
-    crateFolder() {
+    createFolder() {
         const user = this.getUserByUrl(this.ruta_seleccionada);
         const path = '/public/dechat2a/' + user + '/Conversation.txt';
         let senderId = this.rdf.session.webId;
@@ -160,7 +164,7 @@ export class ChatComponent implements OnInit {
             messages_aux.sort(function(a, b) {
                 // convert date object into number to resolve issue in typescript
                 return  +new Date(a.date) - +new Date(b.date);
-            })
+            });
             this.messages = messages_aux;
         }
     }
@@ -199,6 +203,7 @@ export class ChatComponent implements OnInit {
                 console.log(`Updated ${url}.`);
             }, err => console.log(err));
         }
+       // this.generateACL();
     }
 
 
@@ -208,9 +213,9 @@ export class ChatComponent implements OnInit {
         const messageContent = (<HTMLInputElement>document.getElementById('comment')).value;
         (document.getElementById('comment') as HTMLInputElement).value = '';
         let senderId = this.rdf.session.webId;
-        const senderPerson: Friend = {webid: senderId, name: this.getUserByUrl(senderId)};
+        const senderPerson: Friend = {webid: senderId, name: this.getUserByUrl(senderId), picture: this.senderPicture};
         //Receiver WebId
-        const recipientPerson: Friend = {webid: this.ruta_seleccionada, name: this.getUserByUrl(this.ruta_seleccionada)};
+        const recipientPerson: Friend = {webid: this.ruta_seleccionada, name: this.getUserByUrl(this.ruta_seleccionada), picture: this.receiverPicture};
         const messageToSend: message = {content: messageContent, date: new Date(Date.now()), sender: senderPerson, recipient: recipientPerson};
         //console.log(messageToSend);
 
@@ -229,42 +234,58 @@ export class ChatComponent implements OnInit {
         } else {
             this.updateTTL(senderId, new TXTPrinter().getTXTDataFromMessage(messageToSend));
         }
+       // this.generateACL();
     }
 
 
-    getProfilePicture(user) {
-        const a = user.toString().replace('card#me', 'perfil.jpeg');
-        return a;
+    async getProfilePicture() {
+
+        this.senderPicture = await this.rdf.getProfilePictureByUser(this.rdf.session.webId);
+        this.receiverPicture = await this.rdf.getProfilePictureByUser(this.ruta_seleccionada);
+        await this.senderPicture.replace("<", "");
+        await this.senderPicture.replace(">", "");
+        await this.receiverPicture.replace("<", "");
+        await this.receiverPicture.replace(">", "");
+
+
+        console.log("RECEIVER ROUTE             " + this.ruta_seleccionada);
+        console.log("RECEIVER PICTURE         " + this.receiverPicture);
+
+        console.log("SENDER ROUTE:          " + this.rdf.session.webId);
+        console.log("SENDER PICTURE:          " + this.senderPicture);
+
+
     }
 
 
-    private generateACL()
+   /* private generateACL()
     {
 
         let user = this.getUserByUrl(this.ruta_seleccionada);
+        let senderId = this.rdf.session.webId;
 
-        const filename = '/public/dechat1a/' + user + ".acl";
-        var aclContents = this.generateACL();
-
-        this.fileClient.updateFile(filename, aclContents).then(success => {
-            200
-        }, err => this.fileClient.createFile(filename, aclContents).then(200));
-    }
+        const stringToChange = '/profile/card#me';
+        const path = '/public/dechat1a/' + user;
 
 
-    private ACLAux() {
 
-        let partnerID = this.ruta_seleccionada.replace("#me", "#");
+        senderId = senderId.replace(stringToChange, path);
+        var aclContents = this.ACLAux(senderId);
 
-        let user = this.getUserByUrl(this.ruta_seleccionada);
-        const filename = '/public/dechat1a/' + user + '/Conversation.txt';
+        senderId = senderId + '/Conversation.acl';
+        console.log('SENDER ID:       ' + senderId);
+        console.log('ACLContents:     ' + aclContents);
+        this.fileClient.createFile(senderId, aclContents).then(200);
+    }*/
 
 
-        var ACL = "@prefix : <#>. \n"
+   /* private ACLAux(ruta) {
+        let partnerID = this.ruta_seleccionada.replace('#me', '#');
+        let filename = "Conversation.txt"
+       var ACL = "@prefix : <#>. \n"
             +"@prefix n0: <http://www.w3.org/ns/auth/acl#>. \n"
             +"@prefix c: </profile/card#>. \n"
             +"@prefix c0: <"+ partnerID + ">. \n\n"
-
             +":ControlReadWrite \n"
             +"\ta n0:Authorization; \n"
             +"\tn0:accessTo <"+ filename +">; \n"
@@ -275,12 +296,27 @@ export class ChatComponent implements OnInit {
             +"\tn0:accessTo <"+ filename +">; \n"
             +"\tn0:agent c0:me; \n"
             +"\tn0:mode n0:Read.";
-        return ACL;
-    }
+
+        var contenido =
+            '@prefix  acl:  <http://www.w3.org/ns/auth/acl#> . \n' +
+            '<#owner>\n' +
+            'a             acl:Authorization;\n' +
+            'acl:agent     <+ this.rdf.session.webId +>;\n' +
+            'acl:accessTo  <+ ruta +>;\n' +
+            'acl:mode\n      acl:Read,\n' +
+            'acl:Write,\n' +
+            'acl:Control.\n' +
+            'acl:defaultForNew <./>;\n' +
+            '<#reader>\n' +
+            'a               acl:Authorization;\n' +
+            'acl:accessTo  <+ ruta +>;\n' +
+            'acl:mode        acl:Read;\n' +
+            'acl:agent  <+ this.ruta_seleccionada +>.' +
+            'acl:defaultForNew <./>;\n' ;
+        console.log(contenido);
+       return contenido;
+    }*/
 }
-
-
-
 
 
 class TXTPrinter {

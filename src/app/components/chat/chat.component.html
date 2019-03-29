@@ -87,11 +87,9 @@
             </div>
         </div>
 
-
         <div class="col-md-8 col-xs-8" *ngIf="!isHidden">
             <h3 class="panel-title"><span class="glyphicon glyphicon-book"></span> Click one contact to start a conversation!</h3>
         </div>
-
 
         <div class="col-sm-8">
             <div class="chatbody">
@@ -113,7 +111,7 @@
                                 </div>
                             </div>
                             <div class="col-md-2 col-xs-2 avatar">
-                                <img src="{{getProfilePicture(message.sender)}}"  onError="src='https://ngaruawahia.ljhooker.co.nz/sites/all/themes/custom/ljhooker_branches/img/profile-default.png'" class=" img-responsive ">
+                                <img src="{{message.sender.picture}}"  onError="src='https://ngaruawahia.ljhooker.co.nz/sites/all/themes/custom/ljhooker_branches/img/profile-default.png'" class=" img-responsive "/>
                                 <p align="center">  <font size="3"> {{getUserByUrl(message.sender)}} </font> </p>
                             </div>
                         </div>

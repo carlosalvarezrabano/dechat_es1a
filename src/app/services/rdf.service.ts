@@ -289,6 +289,12 @@ export class RdfService {
     }
   }
 
+  getProfilePictureByUser = async (user) => {
+      //let image = this.getValueFromVcard('hasPhoto');
+      const image = await this.store.each($rdf.sym(user), VCARD('hasPhoto'));
+      return image;
+  }
+
   getFriends = async () => {
     const person = this.session.webId;
     const friends = this.store.each($rdf.sym(person), FOAF('knows'));
